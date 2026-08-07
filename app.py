@@ -63,3 +63,31 @@ def predict():
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    if 'file' not in request.files:
+        return "No file uploaded", 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return "No selected file", 400
+
+    if file:
+        filename = file.filename
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+
+        # Run prediction
+        predicted_class, confidence = preprocess_and_predict(file_path)
+
+        # Web relative path for HTML rendering
+        web_image_path = f"/static/uploads/{filename}"
+
+        return render_template(
+            'index.html',
+            prediction=predicted_class,
+            confidence=confidence,
+            image_path=web_image_path
+        )
